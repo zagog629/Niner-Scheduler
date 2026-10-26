@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Privacy policy</title>
+  <meta name="description" content="Niner Scheduler has no accounts, cookies, analytics or ads. Your plan stays in your browser.">
+  <meta name="theme-color" content="#046A38" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#00402a" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="icons/icon-128.png" type="image/png">
+  <link rel="stylesheet" href="css/styles.css">
+  <script>
+    // Use the theme picked in the app, if any
+    try {
+      const t = JSON.parse(localStorage.getItem('ns:theme') || '"auto"');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch { /* storage unavailable */ }
+  </script>
+</head>
+<body class="doc-page">
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Back to Niner Scheduler">
+      <img src="icons/icon-128.png" alt="" width="28" height="28">
+      <span>Niner Scheduler</span>
+    </a>
+    <div class="topbar-actions"><a class="btn back-btn" href="./"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Back to home</span></a></div>
+  </header>
+
+  <main class="doc">
+    <h1>Privacy policy</h1>
+    <p class="doc-date">Last updated October 25, 2026</p>
+
+    <p class="doc-summary">Niner Scheduler has no accounts and uses no cookies, analytics, trackers or ads. It doesn't collect or sell personal information. Everything you enter stays in your own browser.</p>
+
+    <h2>What's stored on your device</h2>
+    <p>To remember your work between visits, the site saves these in your browser's local storage:</p>
+    <ul>
+      <li>Your plan: the courses you add, sections you lock or turn off, and your preferences and breaks.</li>
+      <li>Schedules you save and the names you give them.</li>
+      <li>Your theme choice and the last term you looked at.</li>
+    </ul>
+    <p>This stays on your device and isn't sent to us or anyone else. Other people using the same browser profile can see it. To erase it, clear this site's data in your browser settings. You can also remove things one at a time in the app: the <strong>×</strong> next to a course, <strong>Reset preferences</strong>, and <strong>Delete</strong> on a saved schedule.</p>
+
+    <h2>What we don't collect</h2>
+    <p>The site never asks you to sign in and doesn't collect your name, email, student ID, NinerNET login, or anything from your university accounts. It loads no third-party scripts, fonts or images; everything comes from the site itself.</p>
+
+    <h2>Share links</h2>
+    <p>A share link contains the term, the CRNs in that schedule, and the name you gave it, all after the <code>#</code> in the address. Browsers don't send that part of a link to the web server. Anyone you give the link to can see that schedule.</p>
+
+    <h2>Calendar files and copying</h2>
+    <p><strong>Add to calendar</strong> builds the <code>.ics</code> file inside your browser, and <strong>Copy CRNs</strong> uses your clipboard. Neither sends anything anywhere.</p>
+
+    <h2>Hosting</h2>
+    <p>The site is hosted on GitHub Pages. Like most web hosts, GitHub may record technical information such as your IP address when your browser requests a page, for security and to keep the service running. We don't receive or use that information. See <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement" rel="noopener">GitHub's privacy statement</a>.</p>
+
+    <h2>Where the course information comes from</h2>
+    <ul>
+      <li>Section times, seats, descriptions and prerequisites come from UNC Charlotte's public class search, which anyone can view without signing in.</li>
+      <li>Grade distributions come from UNC Charlotte's Office of the Registrar. They are totals per course and instructor and contain no information about individual students.</li>
+      <li>Professor ratings are the public summary numbers shown on Rate My Professors.</li>
+    </ul>
+    <p>A scheduled job refreshes this information on its own. Visiting the site doesn't trigger it or send anything about you.</p>
+
+    <h2>Links to other sites</h2>
+    <p>Links to Banner, Rate My Professors and Coursicle take you to sites with their own privacy policies.</p>
+
+    <h2>Changes</h2>
+    <p>If this policy changes, the date at the top will change with it.</p>
+
+    <p class="doc-date">Niner Scheduler is an independent schedule planner for UNC Charlotte students. Not affiliated with or endorsed by UNC Charlotte.</p>
+  </main>
+</body>
+</html>

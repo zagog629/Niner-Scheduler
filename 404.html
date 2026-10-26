@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Page not found</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#046A38" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#00402a" media="(prefers-color-scheme: dark)">
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f1f4f2; --surface: #ffffff; --surface-2: #f6f8f7; --ink: #13201a; --ink-2: #3f4d46; --muted: #5b6962;
+      --line: #d8e0db; --line-2: #e8ede9; --niner: #046a38; --niner-hover: #03582e; --on-niner: #ffffff;
+      --block: #e3f0e8; --block-edge: #046a38; --gold: #a49665;
+      --head-bg: #ffffff; --head-ink: #13201a; --head-rule: 1px solid #d8e0db;
+      font-family: 'General Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg: #181a1b; --surface: #1e2021; --surface-2: #25282a; --ink: #e8e6e3; --ink-2: #cfcbc4; --muted: #aba499;
+        --line: #3a3e41; --line-2: #2c2f31; --niner: #70ffc6; --niner-hover: #9affd8; --on-niner: #0f2a1f;
+        --block: rgba(112, 255, 198, 0.12); --block-edge: #70ffc6; --gold: #a49665;
+        --head-bg: #00402a; --head-ink: #e8e6e3; --head-rule: 3px solid #6e6441;
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+      --bg: #181a1b; --surface: #1e2021; --surface-2: #25282a; --ink: #e8e6e3; --ink-2: #cfcbc4; --muted: #aba499;
+      --line: #3a3e41; --line-2: #2c2f31; --niner: #70ffc6; --niner-hover: #9affd8; --on-niner: #0f2a1f;
+      --block: rgba(112, 255, 198, 0.12); --block-edge: #70ffc6; --gold: #a49665;
+      --head-bg: #00402a; --head-ink: #e8e6e3; --head-rule: 3px solid #6e6441;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column; background: var(--bg); color: var(--ink); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+    header { display: flex; align-items: center; height: 58px; padding: 0 18px; background: var(--head-bg); color: var(--head-ink); border-bottom: var(--head-rule); }
+    .brand { display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 650; font-size: 17px; letter-spacing: -0.01em; }
+    .mark { width: 28px; height: 28px; border-radius: 7px; background: #046a38 center / cover no-repeat; }
+    main { flex: 1; display: grid; place-items: center; padding: 32px 16px 48px; }
+    .wrap { width: min(560px, 100%); }
+    .week { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .week-head, .week-body { display: grid; grid-template-columns: 46px repeat(5, 1fr); }
+    .week-head { border-bottom: 1px solid var(--line); }
+    .week-head div { padding: 8px 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); border-left: 1px solid var(--line-2); }
+    .week-head div:first-child { border-left: 0; }
+    .week-body { height: 208px; position: relative; }
+    .times { position: relative; }
+    .times span { position: absolute; right: 7px; font-size: 10.5px; color: var(--muted); transform: translateY(-50%); }
+    .col { border-left: 1px solid var(--line-2); background-image: repeating-linear-gradient(to bottom, var(--line-2) 0 1px, transparent 1px 52px); position: relative; }
+    .block { position: absolute; left: 3px; right: 3px; top: 66px; height: 63px; padding: 5px 7px; border-radius: 6px; background: var(--block); border-left: 4px solid var(--block-edge); line-height: 1.2; }
+    .block strong { display: block; font-size: 15px; letter-spacing: -0.01em; }
+    .block span { font-size: 11.5px; color: var(--ink-2); }
+    h1 { font-size: 30px; line-height: 1.15; letter-spacing: -0.02em; margin: 28px 0 8px; }
+    p { margin: 0; color: var(--ink-2); max-width: 52ch; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; margin-left: auto; padding: 0 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font-weight: 550; font-size: 14px; text-decoration: none; }
+    .btn:hover { background: var(--surface-2); }
+    .btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .btn:focus-visible { outline: 2px solid var(--niner); outline-offset: 2px; }
+    @media (max-width: 480px) { h1 { font-size: 25px; } .block strong { font-size: 13px; } .week-head div { font-size: 11.5px; text-align: center; padding: 7px 2px; } }
+  </style>
+  <script>
+    try {
+      const t = JSON.parse(localStorage.getItem('ns:theme') || '"auto"');
+      if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t;
+    } catch { /* storage unavailable */ }
+  </script>
+</head>
+<body>
+  <header>
+    <a class="brand" href="/" data-home>
+      <span class="mark" aria-hidden="true"></span>
+      <span>Niner Scheduler</span>
+    </a>
+    <a class="btn back-btn" href="/" data-home><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Back to home</span></a>
+  </header>
+  <main>
+    <div class="wrap">
+      <div class="week" aria-hidden="true">
+        <div class="week-head"><div></div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div></div>
+        <div class="week-body">
+          <div class="times"><span style="top:2px;transform:none">8 AM</span><span style="top:52px">9 AM</span><span style="top:104px">10 AM</span><span style="top:156px">11 AM</span></div>
+          <div class="col"></div><div class="col"></div>
+          <div class="col"><div class="block"><strong>404</strong><span>Page not found</span></div></div>
+          <div class="col"></div><div class="col"></div>
+        </div>
+      </div>
+      <h1>This page isn't on the schedule</h1>
+      <p>The link may be old or mistyped.</p>
+    </div>
+  </main>
+  <script>
+    // Work out where the site lives
+    (async () => {
+      const first = location.pathname.split('/').filter(Boolean)[0];
+      const candidates = [...(first ? [`/${first}/`] : []), '/'];
+      for (const base of candidates) {
+        try {
+          const r = await fetch(`${base}data/terms.json`, { method: 'HEAD', cache: 'no-store' });
+          if (!r.ok) continue;
+          document.querySelectorAll('[data-home]').forEach((a) => (a.href = base));
+          document.querySelector('.mark').style.backgroundImage = `url('${base}icons/icon-128.png')`;
+          const style = document.createElement('style');
+          style.textContent = [400, 500, 600, 700]
+            .map((w, i) => `@font-face{font-family:'General Sans';src:url('${base}fonts/GeneralSans-${['Regular', 'Medium', 'Semibold', 'Bold'][i]}.woff') format('woff');font-weight:${w};font-display:swap}`)
+            .join('');
+          document.head.appendChild(style);
+          return;
+        } catch { /* try the next one */ }
+      }
+    })();
+  </script>
+</body>
+</html>
