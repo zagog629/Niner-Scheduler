@@ -1,15 +1,9 @@
 name: Update course data
 
-# Scrapes UNC Charlotte's public class search + Rate My Professors, then publishes the site
-# to GitHub Pages. Data is never committed to the repo; it lives in the Pages deployment and
-# in the Actions cache (so a failed scrape falls back to the last good copy).
-
 on:
   push:
     branches: [main]
-  schedule:
-    # Every 2 hours at :17 past (GitHub runs are often a few minutes late)
-    - cron: '17 */2 * * *'
+  # Started every 2 hours by "Schedule data refresh" (schedule-refresh.yml), or by hand
   workflow_dispatch:
     inputs:
       terms:

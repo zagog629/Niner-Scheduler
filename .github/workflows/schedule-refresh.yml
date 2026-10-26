@@ -1,0 +1,42 @@
+name: Schedule data refresh
+
+on:
+  schedule:
+    - cron: '17,47 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: write # start "Update course data" and see whether it's already running
+  pages: read # find the site's address
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Start a refresh if the published data is 2 hours old
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          site=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq .html_url 2>/dev/null || true)
+          site=${site:-https://$GITHUB_REPOSITORY_OWNER.github.io/${GITHUB_REPOSITORY#*/}/}
+          updated=$(curl -fsS "${site%/}/data/terms.json?t=$(date +%s)" 2>/dev/null | jq -r '.updated // empty' || true)
+          if [ -n "$updated" ]; then
+            age=$(( ($(date +%s) - $(date -d "$updated" +%s)) / 60 ))
+            echo "Published data is $age minutes old"
+            # 110 rather than 120 so a check a few minutes early still counts
+            if [ "$age" -lt 110 ]; then
+              echo "Fresh enough, nothing to do"
+              exit 0
+            fi
+          else
+            echo "No published data found"
+          fi
+          busy=$(gh run list --repo "$GITHUB_REPOSITORY" --workflow update-data.yml --json status --jq '[.[] | select(.status != "completed")] | length')
+          if [ "$busy" != "0" ]; then
+            echo "A refresh is already running or queued"
+            exit 0
+          fi
+          gh workflow run update-data.yml --repo "$GITHUB_REPOSITORY" --ref "$BRANCH"
+          echo "Started Update course data"
