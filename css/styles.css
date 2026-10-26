@@ -176,7 +176,9 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .freshness { font-size: 13px; color: var(--topbar-muted); white-space: nowrap; }
 .topbar .icon-btn { color: var(--topbar-ink); }
 .topbar .icon-btn:hover { background: var(--topbar-hover); color: var(--topbar-ink); }
-.topbar #github-btn svg { width: 15.65px; height: 15.65px; }
+/* The mark's circle is open at the bottom, so it needs to be a little wider than the 15px
+   outlined circles beside it to look the same size */
+.topbar #github-btn svg { width: 17px; height: 17px; }
 .topbar-actions { margin-left: auto; display: flex; gap: 2px; }
 
 .banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 10px 18px; background: var(--niner-tint); border-bottom: 1px solid var(--line); font-size: 14px; }
