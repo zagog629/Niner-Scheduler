@@ -58,7 +58,8 @@ function gradeReadout(counts, k) {
   const total = LETTERS.reduce((t, l) => t + (counts[l] || 0), 0);
   const n = counts[k] || 0;
   const what = k === 'W' ? 'withdrew' : `got ${k === 'A' || k === 'F' ? 'an' : 'a'} ${k}`;
-  const letter = `<span class="gc-r-letter${k === 'W' ? ' is-w' : ''}" aria-hidden="true">${k}</span>`;
+  // data-g rather than data-k: selectGrade toggles is-sel on every [data-k] in the chart
+  const letter = `<span class="gc-r-letter" data-g="${k}" aria-hidden="true">${k}</span>`;
   if (!n) return `${letter}<span><strong>No students</strong> ${what}<span class="gc-r-more">out of ${fmtNum(total)}</span></span>`;
   const pct = (n / total) * 100;
   const more = [`${pct.toFixed(1)}% of ${fmtNum(total)} students`];
@@ -89,7 +90,7 @@ export function selectGrade(root, counts, k) {
   fig.querySelector('.gc-readout').innerHTML = k ? gradeReadout(counts, k) : CHART_HINT;
 }
 
-/** Single-series column chart of a grade distribution; W is drawn in neutral gray. Bars are selectable (see selectGrade) */
+/** Column chart of a grade distribution, each letter in its own color (green A to red F, gray W). Bars are selectable (see selectGrade) */
 export function gradeChart(counts, caption) {
   const total = LETTERS.reduce((t, k) => t + (counts[k] || 0), 0);
   if (!total) return '<p class="muted">No grades recorded for this selection.</p>';
@@ -120,7 +121,7 @@ export function gradeChart(counts, caption) {
       ? `M${x},${padT + plotH} V${y + r} Q${x},${y} ${x + r},${y} H${x + barW - r} Q${x + barW},${y} ${x + barW},${y + r} V${padT + plotH} Z`
       : '';
     const tip = `${k}: ${fmtNum(counts[k] || 0)} students (${pct[i].toFixed(1)}%)`;
-    return `<g class="gc-bar${k === 'W' ? ' is-w' : ''}" data-k="${k}" role="button" aria-pressed="false" tabindex="0" aria-label="${tip}">
+    return `<g class="gc-bar" data-k="${k}" role="button" aria-pressed="false" tabindex="0" aria-label="${tip}">
       <title>${tip}</title>
       <rect class="gc-hit" x="${padL + i * band + 1}" y="${padT - 14}" width="${band - 2}" height="${plotH + padB + 14}" rx="6"/>
       ${path ? `<path d="${path}"/>` : ''}

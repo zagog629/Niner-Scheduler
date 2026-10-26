@@ -24,7 +24,9 @@
   --ok: #8a5f00;
   --bad: #b3261e;
   --chart-1: #046a38;
-  --chart-w: #8a948f;
+  /* Grade chart, one color per letter (same as Niner Registration). Each reads at 3.5:1 or better on the dark surface too, so dark mode keeps them */
+  --grade-a: #2ca25f; --grade-b: #74c476; --grade-c: #e9a400;
+  --grade-d: #fd8d3c; --grade-f: #de2d26; --grade-w: #969696;
   --shadow: 0 1px 2px rgba(19, 32, 26, 0.06), 0 10px 28px rgba(19, 32, 26, 0.08);
   /* Course identity colors (validated categorical set, light mode) */
   --k0: #2a78d6; --k1: #eb6834; --k2: #1baf7a; --k3: #eda100;
@@ -55,7 +57,7 @@
     --line: #3a3e41; --line-2: #2c2f31;
     --niner: #70ffc6; --niner-hover: #9affd8; --niner-tint: rgba(112, 255, 198, 0.12); --on-niner: #0f2a1f;
     --gold: #a49665; --hatch: rgba(164, 150, 101, 0.4); --hatch-edge: rgba(164, 150, 101, 0.7);
-    --good: #5ccea1; --ok: #e0b14a; --bad: #ef5f5f; --chart-1: #27a064; --chart-w: #6b7073;
+    --good: #5ccea1; --ok: #e0b14a; --bad: #ef5f5f; --chart-1: #27a064;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.45);
     --k0: #3987e5; --k1: #d95926; --k2: #199e70; --k3: #c98500; --k4: #d55181; --k5: #008300; --k6: #9085e9; --k7: #e66767;
     --fill-mix: 26%;
@@ -71,7 +73,7 @@
   --line: #3a3e41; --line-2: #2c2f31;
   --niner: #70ffc6; --niner-hover: #9affd8; --niner-tint: rgba(112, 255, 198, 0.12); --on-niner: #0f2a1f;
   --gold: #a49665; --hatch: rgba(164, 150, 101, 0.4); --hatch-edge: rgba(164, 150, 101, 0.7);
-  --good: #5ccea1; --ok: #e0b14a; --bad: #ef5f5f; --chart-1: #27a064; --chart-w: #6b7073;
+  --good: #5ccea1; --ok: #e0b14a; --bad: #ef5f5f; --chart-1: #27a064;
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.45);
   --k0: #3987e5; --k1: #d95926; --k2: #199e70; --k3: #c98500; --k4: #d55181; --k5: #008300; --k6: #9085e9; --k7: #e66767;
   --fill-mix: 26%;
@@ -554,8 +556,14 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .gc svg { display: block; width: 100%; max-width: 440px; height: auto; overflow: visible; }
 .gc-grid { stroke: var(--line); stroke-width: 1; }
 .gc-tick { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
-.gc-bar path { fill: var(--chart-1); }
-.gc-bar.is-w path { fill: var(--chart-w); }
+/* --g is the letter's color, shared by its bar and the readout badge */
+.gc-bar[data-k="A"], .gc-r-letter[data-g="A"] { --g: var(--grade-a); }
+.gc-bar[data-k="B"], .gc-r-letter[data-g="B"] { --g: var(--grade-b); }
+.gc-bar[data-k="C"], .gc-r-letter[data-g="C"] { --g: var(--grade-c); }
+.gc-bar[data-k="D"], .gc-r-letter[data-g="D"] { --g: var(--grade-d); }
+.gc-bar[data-k="F"], .gc-r-letter[data-g="F"] { --g: var(--grade-f); }
+.gc-bar[data-k="W"], .gc-r-letter[data-g="W"] { --g: var(--grade-w); }
+.gc-bar path { fill: var(--g); }
 .gc-bar { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .gc-bar:hover path, .gc-bar:focus path { opacity: 0.8; }
 .gc-bar:focus { outline: none; }
@@ -579,8 +587,7 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .gc-readout { display: flex; align-items: center; gap: 10px; box-sizing: border-box; max-width: 440px; min-height: 52px; margin-top: 6px; padding: 7px 12px 7px 8px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); }
 .gc-hint { padding-left: 4px; color: var(--muted); }
 .gc-readout strong { color: var(--ink); }
-.gc-r-letter { flex: none; display: grid; place-items: center; width: 34px; height: 34px; box-sizing: border-box; border: 2px solid var(--chart-1); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 700; }
-.gc-r-letter.is-w { border-color: var(--chart-w); }
+.gc-r-letter { flex: none; display: grid; place-items: center; width: 34px; height: 34px; box-sizing: border-box; border: 2px solid var(--g); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 700; }
 .gc-r-more { display: block; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .gc-table tr.is-sel td { background: var(--niner-tint); font-weight: 600; }
 .gc figcaption { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
