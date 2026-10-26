@@ -1640,11 +1640,17 @@ function renderFreshness() {
 }
 
 async function switchTerm(code) {
+  $('#board').setAttribute('aria-busy', 'true');
+  try {
+    // Load before touching state, so a failed load leaves the current term and its saved plan as they were
+    await loadTerm(code);
+  } catch (err) {
+    $('#board').removeAttribute('aria-busy');
+    throw err;
+  }
   if (state.term) persist();
   state.term = code;
   store.set('ns:lastTerm', code);
-  $('#board').setAttribute('aria-busy', 'true');
-  await loadTerm(code);
   computeTermRange();
   restore();
   await Promise.all([...new Set(state.plan.courses.map((c) => c.key.split(' ')[0]))].map(loadGrades));
@@ -1668,22 +1674,118 @@ async function init() {
   initBoardEvents();
   initSavedEvents();
   initShareEvents();
-  $('#term-select').addEventListener('change', (e) => switchTerm(e.target.value));
+  $('#term-select').addEventListener('change', async (e) => {
+    const code = e.target.value;
+    try {
+      await switchTerm(code);
+    } catch (err) {
+      console.error(`Niner Scheduler: couldn't load term ${code}`, err);
+      renderTermSelect(); // put the picker back on the term that's still showing
+      const name = db.terms.find((t) => t.code === code)?.desc || 'that semester';
+      toast(
+        err?.kind === 'offline'
+          ? `You’re offline, so ${name} couldn’t load. Check your connection and try again.`
+          : `Couldn’t load ${name} right now. Please try again in a few minutes.`,
+      );
+    }
+  });
+  $('#load-error').addEventListener('click', (e) => {
+    if (e.target.closest('[data-retry]')) retryLoad();
+  });
   // Ctrl/Cmd+P prints the same clean sheet as the Print button
   window.addEventListener('beforeprint', () => {
     if (db.term) buildPrintSheet();
   });
 
+  await start();
+}
+
+// What students see when class data can't be loaded
+const LOAD_MESSAGES = {
+  offline: {
+    title: 'You’re offline',
+    body: 'Niner Scheduler couldn’t connect to load class information. Check your internet connection and try again.',
+  },
+  missing: {
+    title: 'Class information isn’t available right now',
+    body: 'We may be in the middle of refreshing class times and seats. Please try again in a few minutes.',
+  },
+  server: {
+    title: 'Something went wrong loading classes',
+    body: 'We couldn’t load class information right now. Please try again in a few minutes.',
+  },
+  'no-terms': {
+    title: 'No semesters are open for registration',
+    body: 'Classes show up here once UNC Charlotte opens registration for an upcoming semester. Check back closer once registration opens.',
+  },
+};
+
+let loadAttempts = 0;
+
+/** Swaps the planner for a plain-language explanation of why class data didn't load, with a way to retry */
+function showLoadError(kind, err = null) {
+  const msg = LOAD_MESSAGES[kind] || LOAD_MESSAGES.server;
+  if (err) console.error('Niner Scheduler: couldn’t load class data', err);
+  $('#layout').hidden = true;
+  $('.mobile-tabs').hidden = true;
+  $('.term-picker').hidden = true;
+  $('#freshness').textContent = '';
+  const retried = loadAttempts > 1
+    ? `<p class="muted small">Still not loading. Last tried at ${esc(new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }))}.</p>`
+    : '';
+  const devHint = kind === 'missing'
+    ? '<p>If you are running this site locally: run <code>npm run scrape</code> in your terminal.</p>'
+    : '';
+  const box = $('#load-error');
+  box.innerHTML = `
+    <div role="alert">
+      <h2>${msg.title}</h2>
+      <p>${msg.body}</p>
+    </div>
+    ${retried}
+    <div class="load-error-actions">
+      <button type="button" class="btn primary" data-retry>${kind === 'no-terms' ? 'Check again' : 'Try again'}</button>
+    </div>
+    ${kind === 'no-terms' ? '' : '<p class="muted small">Your courses and saved schedules are still stored in this browser.</p>'}
+    ${err ? `<details class="load-error-tech"><summary>Technical details</summary><p><code>${esc(err.message || String(err))}</code></p>${devHint}</details>` : ''}`;
+  box.hidden = false;
+  if (kind === 'offline') window.addEventListener('online', retryLoad, { once: true });
+}
+
+function hideLoadError() {
+  const box = $('#load-error');
+  box.hidden = true;
+  box.innerHTML = '';
+  $('#layout').hidden = false;
+  $('.mobile-tabs').hidden = false;
+  $('.term-picker').hidden = false;
+}
+
+async function retryLoad() {
+  const box = $('#load-error');
+  if (box.hidden) return; // already loaded (e.g. the "online" listener firing after a manual retry worked)
+  const btn = box.querySelector('[data-retry]');
+  if (btn?.disabled) return;
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Trying again…';
+  }
+  // A short pause so an instant failure still reads as "we tried"
+  await new Promise((r) => setTimeout(r, 500));
+  await start();
+}
+
+/** Loads the term list and the starting term, then shows the planner. Safe to call again to retry */
+async function start() {
+  loadAttempts++;
   try {
     await loadTerms();
   } catch (err) {
-    $('.term-picker').hidden = true;
-    $('#layout').innerHTML = `<div class="fatal"><h2>Course data isn't published yet</h2><p>This site reads <code>data/terms.json</code>, which the “Update course data” GitHub Action creates. Run that workflow once (Actions tab → Update course data → Run workflow), or run <code>npm run scrape</code> locally.</p><p class="muted small">${esc(err.message)}</p></div>`;
+    showLoadError(err?.kind, err);
     return;
   }
   if (!db.terms.length) {
-    $('.term-picker').hidden = true;
-    $('#layout').innerHTML = '<div class="fatal"><h2>No terms available</h2><p>The data refresh hasn’t found any terms open for registration yet.</p></div>';
+    showLoadError('no-terms');
     return;
   }
   const share = parseShare(location.hash);
@@ -1693,7 +1795,13 @@ async function init() {
     (last && db.terms.find((t) => t.code === last)?.code) ||
     db.terms[0].code;
 
-  await Promise.all([loadRmp(), switchTerm(pickTerm)]);
+  try {
+    await Promise.all([loadRmp(), switchTerm(pickTerm)]);
+  } catch (err) {
+    showLoadError(err?.kind, err);
+    return;
+  }
+  hideLoadError();
   if (share && share.term === state.term) {
     state.view = { kind: 'crns', crns: share.crns, label: share.name || 'Shared schedule', source: 'shared' };
     state.tab = 'schedules';

@@ -1,15 +1,36 @@
 // Loads the static JSON the GitHub Action publishes and answers lookups about it
 import { buildRmpIndex, findRmp, findGrades, gpaOf, courseTotals } from './names.js';
 
+/**
+ * A data file that couldn't be loaded. `kind` says why, so the UI can explain it in plain words:
+ * 'offline' (no connection), 'missing' (404), 'server' (any other HTTP error) or 'bad-data' (not valid JSON)
+ */
+export class LoadError extends Error {
+  constructor(url, kind, status = null, cause = undefined) {
+    super(`${url}: ${status ? `HTTP ${status}` : cause?.message || kind}`, cause ? { cause } : undefined);
+    this.name = 'LoadError';
+    this.url = url;
+    this.kind = kind;
+    this.status = status;
+  }
+}
+
 const cache = new Map();
 async function getJson(url) {
   if (!cache.has(url)) {
     cache.set(
       url,
-      fetch(url, { cache: 'no-cache' }).then((r) => {
-        if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
-        return r.json();
-      }),
+      fetch(url, { cache: 'no-cache' }).then(
+        (r) => {
+          if (!r.ok) throw new LoadError(url, r.status === 404 ? 'missing' : 'server', r.status);
+          return r.json().catch((err) => {
+            throw new LoadError(url, err instanceof SyntaxError ? 'bad-data' : 'offline', null, err);
+          });
+        },
+        (err) => {
+          throw new LoadError(url, 'offline', null, err);
+        },
+      ),
     );
   }
   try {

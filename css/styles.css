@@ -196,8 +196,17 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 }
 .board { padding: 14px 22px 40px; min-width: 0; }
 .panel-h { display: block; font-size: 14px; font-weight: 600; color: var(--ink-2); margin: 0 0 8px; }
-.fatal { grid-column: 1 / -1; max-width: 64ch; margin: 64px auto; padding: 0 20px; }
-.fatal h2 { font-size: 24px; margin-bottom: 12px; }
+/* Shown in place of the planner when class data can't be loaded */
+.load-error { box-sizing: border-box; max-width: 60ch; min-height: calc(100dvh - var(--topbar) - 120px); margin: 0 auto; padding: 72px 20px 48px; }
+.load-error h2 { font-size: 24px; margin-bottom: 12px; }
+.load-error p { margin: 0 0 10px; color: var(--ink-2); line-height: 1.5; }
+.load-error .muted { color: var(--muted); }
+.load-error-actions { margin: 20px 0 16px; }
+.load-error-actions .btn:disabled { opacity: 0.7; cursor: progress; }
+.load-error-tech { margin-top: 32px; font-size: 13px; color: var(--muted); }
+.load-error-tech summary { cursor: pointer; width: fit-content; }
+.load-error-tech p { margin-top: 8px; color: var(--muted); }
+.load-error-tech code { font-size: 0.92em; padding: 1px 5px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--line-2); overflow-wrap: anywhere; }
 
 /* Search */
 .search { position: relative; margin-bottom: 6px; }
