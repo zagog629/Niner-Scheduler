@@ -332,7 +332,9 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .week-grid { min-height: 120px; }
 .wk { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; user-select: none; -webkit-user-select: none; }
 .wk-head { display: grid; grid-template-columns: var(--gutter) repeat(var(--days), minmax(0, 1fr)); border-bottom: 1px solid var(--line); }
-.wk-day { padding: 9px 8px; font-weight: 600; font-size: 13.5px; color: var(--ink-2); border-left: 1px solid var(--line-2); }
+/* Day name and its "Day off" tag wrap onto two lines in narrow columns (side by side) instead of
+   spilling into the next day */
+.wk-day { display: flex; flex-wrap: wrap; align-items: center; gap: 3px 6px; min-width: 0; padding: 9px 8px; font-weight: 600; font-size: 13.5px; color: var(--ink-2); border-left: 1px solid var(--line-2); }
 .wk-day abbr { text-decoration: none; }
 .wk-body { display: grid; grid-template-columns: var(--gutter) minmax(0, 1fr); height: calc(var(--hours) * var(--hour)); }
 .wk-times { position: relative; }
@@ -402,7 +404,7 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
   background: var(--surface); color: var(--ink); border: 1.5px solid var(--gold);
 }
 .wk-day.is-off abbr { color: var(--muted); text-decoration: line-through; }
-.wk-day-off { margin-left: 6px; padding: 0 5px; border-radius: 4px; font-size: 10.5px; font-weight: 650; color: var(--ink-2); border: 1px solid var(--gold); white-space: nowrap; }
+.wk-day-off { padding: 0 5px; border-radius: 4px; font-size: 10.5px; font-weight: 650; color: var(--ink-2); border: 1px solid var(--gold); white-space: nowrap; }
 .wk-key { display: flex; align-items: center; gap: 8px; margin: 8px 2px 0; font-size: 12.5px; color: var(--muted); }
 .wk-key-swatch { width: 18px; height: 12px; border-radius: 3px; flex: none; border: 1px solid var(--hatch-edge); background: repeating-linear-gradient(135deg, var(--hatch) 0 2px, transparent 2px 5px); }
 .wk-block.is-tiny .wk-time { display: none; }
@@ -482,8 +484,17 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .cmp-table td { font-weight: 600; font-variant-numeric: tabular-nums; }
 .cmp-grids { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .cmp-grids h4 { font-size: 14px; margin-bottom: 6px; }
-.cmp-grid { --hour: 44px; --gutter: 46px; }
-.cmp-grid .wk-code { white-space: normal; line-height: 1.15; }
+.cmp-grid { --hour: 48px; --gutter: 46px; }
+.cmp-grid .wk-block { padding: 3px 3px 3px 6px; border-left-width: 3px; }
+.cmp-grid .wk-code { font-size: 12px; letter-spacing: -0.02em; white-space: normal; line-height: 1.15; }
+.cmp-grid .wk-time { font-size: 11px; letter-spacing: -0.01em; white-space: normal; line-height: 1.15; }
+.cmp-grid .wk-block.is-short .wk-time { display: none; }
+/* Narrow day columns (side by side, mid-size windows): wrap the course code and time onto more lines
+   instead of cutting them off mid-word */
+@container (max-width: 640px) {
+  .wk-block { padding-right: 4px; }
+  .wk-code, .wk-time { white-space: normal; line-height: 1.15; }
+}
 .cmp-grid .wk-meta, .cmp-grid .wk-partial { display: none; }
 .sbs .cmp-table { margin-bottom: 12px; }
 .sbs .cmp-grids h4 { display: flex; align-items: center; gap: 6px; }
@@ -604,7 +615,7 @@ svg.gh-mark[viewBox] { fill: currentColor; stroke: none; }
   .rb-sort { flex: 1 1 auto; min-width: 0; }
   .rb-sort select { width: 100%; }
   .rb-overlay select { max-width: 140px; }
-  .wk-day { padding: 7px 4px; font-size: 12.5px; text-align: center; }
+  .wk-day { padding: 7px 4px; font-size: 12.5px; justify-content: center; }
   .wk-hour { right: 5px; font-size: 10px; }
   .wk-limit-mark { right: 1px; padding: 0 2px; font-size: 9.5px; }
   .wk-limit-mark.has-min .wk-mer, .wk-day-off { display: none; }
