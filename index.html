@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Niner Scheduler</title>
+  <meta name="description" content="Build every possible UNC Charlotte class schedule. Lock sections, pick professors, block off time, and compare schedules with Rate My Professors ratings and grade history.">
+  <meta name="theme-color" content="#046A38" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#00402a" media="(prefers-color-scheme: dark)">
+  <meta property="og:title" content="Niner Scheduler">
+  <meta property="og:description" content="Every possible UNC Charlotte schedule, with professor ratings and grade history.">
+  <link rel="icon" href="icons/icon-128.png" type="image/png">
+  <link rel="apple-touch-icon" href="icons/icon-128.png">
+  <link rel="preload" href="fonts/GeneralSans-Medium.woff" as="font" type="font/woff" crossorigin>
+  <link rel="preload" href="fonts/GeneralSans-Semibold.woff" as="font" type="font/woff" crossorigin>
+  <link rel="stylesheet" href="css/styles.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <a class="skip" href="#board">Skip to schedules</a>
+
+  <header class="topbar">
+    <a class="brand" href="./" aria-label="Niner Scheduler home">
+      <img src="icons/icon-128.png" alt="" width="28" height="28">
+      <span>Niner Scheduler</span>
+    </a>
+    <label class="term-picker">
+      <span class="sr-only">Term</span>
+      <select id="term-select"></select>
+    </label>
+    <span class="freshness" id="freshness"></span>
+    <div class="topbar-actions">
+      <button type="button" id="help-btn" class="icon-btn" aria-label="How it works" title="How it works">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17v.5"/></svg>
+      </button>
+      <a id="github-btn" class="icon-btn" href="https://github.com/zagog629/Niner-Scheduler" target="_blank" rel="noopener" aria-label="Niner Scheduler on GitHub" title="View the code on GitHub">
+        <svg class="gh-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"/></svg>
+      </a>
+      <button type="button" id="theme-btn" class="icon-btn" aria-label="Change theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3v18a9 9 0 0 0 0-18z" fill="currentColor" stroke="none"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <div id="share-banner" class="banner" hidden></div>
+
+  <main id="layout" class="layout" data-mobile="plan">
+    <aside class="plan" aria-label="Your courses and preferences">
+      <div class="search">
+        <label for="course-search" class="panel-h">Courses</label>
+        <input id="course-search" type="search" placeholder="Add a course: ITSC 2214, calculus, or a CRN" autocomplete="off" spellcheck="false"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="search-results">
+        <ul id="search-results" role="listbox" aria-label="Matching courses" hidden></ul>
+      </div>
+      <section id="course-list" class="course-list" aria-live="polite"></section>
+      <section id="prefs" class="prefs"></section>
+    </aside>
+
+    <section id="board" class="board" aria-label="Schedules">
+      <div class="board-tabs" role="tablist" aria-label="Schedule views">
+        <button type="button" role="tab" data-tab="schedules" aria-selected="true" aria-controls="schedules-view">Schedules</button>
+        <button type="button" role="tab" data-tab="saved" aria-selected="false" aria-controls="saved-view">Saved</button>
+      </div>
+
+      <div id="schedules-view" role="tabpanel">
+        <div id="results-bar" class="results-bar"></div>
+        <div class="board-body">
+          <div id="thumbs" class="thumbs" aria-label="All schedules" hidden></div>
+          <div class="grid-area">
+            <div id="diag" class="diag" hidden></div>
+            <div id="paint-bar" class="paint-bar" role="status" hidden></div>
+            <div id="week-grid" class="week-grid"></div>
+            <div id="untimed" class="untimed" hidden></div>
+            <div id="schedule-detail" class="detail"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="saved-view" class="saved-view" role="tabpanel" hidden></div>
+    </section>
+  </main>
+
+  <nav class="mobile-tabs" aria-label="Sections">
+    <button type="button" data-mob="plan" aria-current="true">Courses</button>
+    <button type="button" data-mob="schedules">Schedules</button>
+    <button type="button" data-mob="saved">Saved</button>
+  </nav>
+
+  <footer class="site-foot">
+    <div class="foot-grid">
+      <section class="foot-col">
+        <h2 class="foot-name"><img src="icons/icon-48.png" alt="" width="22" height="22">Niner Scheduler</h2>
+        <p>Niner Scheduler is an independent schedule planner for UNC Charlotte students. Not affiliated with or endorsed by UNC Charlotte.</p>
+        <a class="foot-github" href="https://github.com/zagog629/Niner-Scheduler" target="_blank" rel="noopener" aria-label="Niner Scheduler on GitHub" title="View the code on GitHub">
+          <svg class="gh-mark" viewBox="0 0 24 24" aria-hidden="true"><path d="M10.226 17.284c-2.965-.36-5.054-2.493-5.054-5.256 0-1.123.404-2.336 1.078-3.144-.292-.741-.247-2.314.09-2.965.898-.112 2.111.36 2.83 1.01.853-.269 1.752-.404 2.853-.404 1.1 0 1.999.135 2.807.382.696-.629 1.932-1.1 2.83-.988.315.606.36 2.179.067 2.942.72.854 1.101 2 1.101 3.167 0 2.763-2.089 4.852-5.098 5.234.763.494 1.28 1.572 1.28 2.807v2.336c0 .674.561 1.056 1.235.786 4.066-1.55 7.255-5.615 7.255-10.646C23.5 6.188 18.334 1 11.978 1 5.62 1 .5 6.188.5 12.545c0 4.986 3.167 9.12 7.435 10.669.606.225 1.19-.18 1.19-.786V20.63a2.9 2.9 0 0 1-1.078.224c-1.483 0-2.359-.808-2.987-2.313-.247-.607-.517-.966-1.034-1.033-.27-.023-.359-.135-.359-.27 0-.27.45-.471.898-.471.652 0 1.213.404 1.797 1.235.45.651.921.943 1.483.943.561 0 .92-.202 1.437-.719.382-.381.674-.718.944-.943"/></svg>
+        </a>
+      </section>
+      <section class="foot-col">
+        <h2>Your privacy</h2>
+        <p>No accounts, cookies, analytics or ads. Courses, preferences and saved schedules are stored locally in your browser.</p>
+        <p class="foot-links"><a href="privacy.html">Privacy policy</a></p>
+      </section>
+      <section class="foot-col">
+        <h2>About the data</h2>
+        <p>Sections come from UNC Charlotte's public class search and refresh every couple of hours. Grade distributions come from the Office of the Registrar.</p>
+        <p class="foot-links"><button type="button" class="link-btn" data-open-help>How it works</button><a href="https://selfservice.uncc.edu/StudentRegistrationSsb/ssb/registration" target="_blank" rel="noopener">Banner registration</a></p>
+      </section>
+    </div>
+  </footer>
+
+  <dialog id="course-modal" class="modal" aria-label="Course details"></dialog>
+
+  <dialog id="help-modal" class="modal help" aria-labelledby="help-title">
+    <div class="modal-shell">
+      <header class="modal-head">
+        <h2 id="help-title">How it works</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      </header>
+      <div class="modal-body">
+        <ol class="steps">
+          <li><strong>Add your courses.</strong> Search by code, title or CRN. Typing a CRN adds the course with that section locked in.</li>
+          <li><strong>Narrow it down.</strong> Lock a section you want, untick sections or whole professors you don't, and set days off, earliest and latest times, and breaks. Drag on the calendar to block off time for work or practice.</li>
+          <li><strong>Browse every schedule.</strong> Every combination without a time conflict is generated instantly. Sort by fewest days, least time between classes, best-rated professors, highest average GPA and more. Use ← and → to flip through them.</li>
+          <li><strong>Register.</strong> Copy the CRNs into Banner's “Enter CRNs” tab, add the schedule to your calendar, or share a link with friends.</li>
+        </ol>
+        <h3>A few extras</h3>
+        <ul>
+          <li><strong>Optional courses.</strong> Mark a course optional and set a credit range to get schedules that include whichever extras fit.</li>
+          <li><strong>Linked sections.</strong> Lectures that need a lab or recitation are paired automatically, using Banner's link groups.</li>
+          <li><strong>8-week courses.</strong> First-half and second-half sections at the same time don't count as a conflict.</li>
+          <li><strong>Compare.</strong> Save schedules, view two side by side, or overlay a friend's shared schedule to find time together.</li>
+          <li><strong>Why nothing fits.</strong> When no schedule works, the board tells you which course or which pair of courses is the problem.</li>
+        </ul>
+        <p class="muted small">Section times and seats come from UNC Charlotte's public class search, refreshed every couple of hours. Grade distributions come from UNC Charlotte's Office of the Registrar, and professor ratings from Rate My Professors. Your plan and saved schedules stay in this browser; nothing is sent anywhere.</p>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="print-sheet" class="print-sheet" aria-hidden="true"></div>
+</body>
+</html>
