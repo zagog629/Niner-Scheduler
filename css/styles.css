@@ -547,13 +547,34 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .gc-tick { fill: var(--muted); font-size: 10px; font-variant-numeric: tabular-nums; }
 .gc-bar path { fill: var(--chart-1); }
 .gc-bar.is-w path { fill: var(--chart-w); }
+.gc-bar { cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .gc-bar:hover path, .gc-bar:focus path { opacity: 0.8; }
 .gc-bar:focus { outline: none; }
-.gc-bar:focus .gc-letter { text-decoration: underline; }
+.gc-bar:focus-visible .gc-letter { text-decoration: underline; }
 .gc-hit { fill: transparent; }
+.gc-bar:focus-visible .gc-hit { stroke: var(--niner); stroke-width: 1.5; }
 .gc-letter { fill: var(--ink-2); font-size: 12px; font-weight: 650; }
 .gc-val { fill: var(--ink-2); font-size: 11px; font-weight: 600; }
-.gc figcaption { font-size: 13.5px; color: var(--ink-2); margin-top: 4px; }
+.gc-count { display: none; fill: var(--ink); font-size: 11.5px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* A picked bar: tinted band, count above it, the other bars faded back */
+.gc.has-sel .gc-val { display: none; }
+.gc-bar.is-sel .gc-count { display: inline; }
+.gc-bar.is-sel .gc-hit { fill: color-mix(in srgb, var(--niner) 12%, transparent); }
+.gc-bar.is-sel path { opacity: 1; }
+.gc-bar.is-sel .gc-letter { fill: var(--ink); }
+.gc.has-sel .gc-bar:not(.is-sel) path { opacity: 0.35; }
+@media (hover: hover) {
+  .gc-bar:hover .gc-hit { fill: color-mix(in srgb, var(--ink) 5%, transparent); }
+  .gc.has-sel .gc-bar:not(.is-sel):hover path { opacity: 0.6; }
+}
+.gc-readout { display: flex; align-items: center; gap: 10px; box-sizing: border-box; max-width: 440px; min-height: 52px; margin-top: 6px; padding: 7px 12px 7px 8px; border-radius: 10px; background: var(--surface-2); font-size: 13.5px; line-height: 1.35; color: var(--ink-2); }
+.gc-hint { padding-left: 4px; color: var(--muted); }
+.gc-readout strong { color: var(--ink); }
+.gc-r-letter { flex: none; display: grid; place-items: center; width: 34px; height: 34px; box-sizing: border-box; border: 2px solid var(--chart-1); border-radius: 8px; background: var(--surface); color: var(--ink); font-size: 16px; font-weight: 700; }
+.gc-r-letter.is-w { border-color: var(--chart-w); }
+.gc-r-more { display: block; font-size: 12.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.gc-table tr.is-sel td { background: var(--niner-tint); font-weight: 600; }
+.gc figcaption { font-size: 13.5px; color: var(--ink-2); margin-top: 6px; }
 .gc-table { margin-top: 6px; font-size: 13px; }
 .gc-table summary { cursor: pointer; color: var(--niner); font-weight: 550; }
 .gc-table table { border-collapse: collapse; margin-top: 6px; }

@@ -43,7 +43,45 @@ function seatsLabel(sec) {
   return wl > 0 ? `Full, ${wl} waitlist` : 'Full';
 }
 
-/** Single-series column chart of a grade distribution; W is drawn in neutral gray */
+const CHART_HINT = '<span class="gc-hint">Select a bar to see how many students got that grade.</span>';
+
+/** Spells out one grade of a distribution: how many students, what share, and how it compares */
+function gradeReadout(counts, k) {
+  const total = LETTERS.reduce((t, l) => t + (counts[l] || 0), 0);
+  const n = counts[k] || 0;
+  const what = k === 'W' ? 'withdrew' : `got ${k === 'A' || k === 'F' ? 'an' : 'a'} ${k}`;
+  const letter = `<span class="gc-r-letter${k === 'W' ? ' is-w' : ''}" aria-hidden="true">${k}</span>`;
+  if (!n) return `${letter}<span><strong>No students</strong> ${what}<span class="gc-r-more">out of ${fmtNum(total)}</span></span>`;
+  const pct = (n / total) * 100;
+  const more = [`${pct.toFixed(1)}% of ${fmtNum(total)} students`];
+  if (pct >= 95) more.push('almost everyone');
+  else if (pct >= 45 && pct < 55) more.push('about half');
+  else if (pct >= 30) more.push(`about ${Math.round(pct / 10)} in 10`);
+  else more.push(pct < 1 ? 'fewer than 1 in 100' : `about 1 in ${Math.round(100 / pct)}`);
+  if ('BCD'.includes(k)) {
+    const upTo = LETTERS.slice(0, LETTERS.indexOf(k) + 1).reduce((t, l) => t + (counts[l] || 0), 0);
+    more.push(`${Math.round((upTo / total) * 100)}% got a ${k} or better`);
+  } else if (k === 'F' || k === 'W') {
+    const dfw = (counts.D || 0) + (counts.F || 0) + (counts.W || 0);
+    more.push(`${Math.round((dfw / total) * 100)}% got a D or F or withdrew`);
+  }
+  return `${letter}<span><strong>${fmtNum(n)} student${n === 1 ? '' : 's'}</strong> ${what}<span class="gc-r-more">${more.join(' · ')}</span></span>`;
+}
+
+/** Highlights grade k in a chart drawn by gradeChart and spells out its numbers; null clears it */
+export function selectGrade(root, counts, k) {
+  const fig = root.querySelector('.gc');
+  if (!fig) return;
+  fig.classList.toggle('has-sel', !!k);
+  fig.querySelectorAll('[data-k]').forEach((el) => {
+    const on = el.dataset.k === k;
+    el.classList.toggle('is-sel', on);
+    if (el.classList.contains('gc-bar')) el.setAttribute('aria-pressed', String(on));
+  });
+  fig.querySelector('.gc-readout').innerHTML = k ? gradeReadout(counts, k) : CHART_HINT;
+}
+
+/** Single-series column chart of a grade distribution; W is drawn in neutral gray. Bars are selectable (see selectGrade) */
 export function gradeChart(counts, caption) {
   const total = LETTERS.reduce((t, k) => t + (counts[k] || 0), 0);
   if (!total) return '<p class="muted">No grades recorded for this selection.</p>';
@@ -74,18 +112,20 @@ export function gradeChart(counts, caption) {
       ? `M${x},${padT + plotH} V${y + r} Q${x},${y} ${x + r},${y} H${x + barW - r} Q${x + barW},${y} ${x + barW},${y + r} V${padT + plotH} Z`
       : '';
     const tip = `${k}: ${fmtNum(counts[k] || 0)} students (${pct[i].toFixed(1)}%)`;
-    return `<g class="gc-bar${k === 'W' ? ' is-w' : ''}" tabindex="0" aria-label="${tip}">
+    return `<g class="gc-bar${k === 'W' ? ' is-w' : ''}" data-k="${k}" role="button" aria-pressed="false" tabindex="0" aria-label="${tip}">
       <title>${tip}</title>
-      <rect class="gc-hit" x="${padL + i * band}" y="${padT}" width="${band}" height="${plotH + padB}"/>
+      <rect class="gc-hit" x="${padL + i * band + 1}" y="${padT - 14}" width="${band - 2}" height="${plotH + padB + 14}" rx="6"/>
       ${path ? `<path d="${path}"/>` : ''}
       ${i === peak ? `<text class="gc-val" x="${x + barW / 2}" y="${y - 5}" text-anchor="middle">${pct[i].toFixed(0)}%</text>` : ''}
+      <text class="gc-count" x="${x + barW / 2}" y="${y - 5}" text-anchor="middle">${fmtNum(counts[k] || 0)}</text>
       <text class="gc-letter" x="${x + barW / 2}" y="${H - 8}" text-anchor="middle">${k}</text>
     </g>`;
   }).join('');
   const gpa = gpaOf(counts);
-  const table = `<details class="gc-table"><summary>Show as table</summary><table><thead><tr><th>Grade</th><th>Students</th><th>Share</th></tr></thead><tbody>${LETTERS.map((k, i) => `<tr><td>${k}</td><td>${fmtNum(counts[k] || 0)}</td><td>${pct[i].toFixed(1)}%</td></tr>`).join('')}</tbody></table></details>`;
+  const table = `<details class="gc-table"><summary>Show as table</summary><table><thead><tr><th>Grade</th><th>Students</th><th>Share</th></tr></thead><tbody>${LETTERS.map((k, i) => `<tr data-k="${k}"><td>${k}</td><td>${fmtNum(counts[k] || 0)}</td><td>${pct[i].toFixed(1)}%</td></tr>`).join('')}</tbody></table></details>`;
   return `<figure class="gc">
-    <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(caption)}: grade distribution">${grid.join('')}${bars}</svg>
+    <svg viewBox="0 0 ${W} ${H}" role="group" aria-label="${esc(caption)}: grade distribution">${grid.join('')}${bars}</svg>
+    <div class="gc-readout" aria-live="polite">${CHART_HINT}</div>
     <figcaption>${gpa != null ? `Average GPA <strong>${gpa.toFixed(2)}</strong> from ` : ''}${fmtNum(total)} grades</figcaption>
     ${table}
   </figure>`;
@@ -244,13 +284,39 @@ export async function openCourseModal(dialog, courseKey, { color = 0, focusName 
       semSel.innerHTML = `<option value="__all">All semesters</option>${sems.map((s) => `<option>${esc(s)}</option>`).join('')}`;
       semSel.disabled = !sems.length;
     };
+    // The picked grade stays picked when the instructor or semester changes, so they're easy to compare
+    let counts = {};
+    let picked = null;
+    const pick = (k) => {
+      picked = k;
+      selectGrade(chart, counts, picked);
+    };
     const draw = () => {
       const v = instSel.value;
-      let counts;
       if (v === '__all') counts = courseTotals(grades);
-      else counts = semSel.value === '__all' ? grades[v].all : grades[v].semesters[semSel.value];
-      chart.innerHTML = gradeChart(counts || {}, v === '__all' ? courseKey : v);
+      else counts = (semSel.value === '__all' ? grades[v].all : grades[v].semesters[semSel.value]) || {};
+      chart.innerHTML = gradeChart(counts, v === '__all' ? courseKey : v);
+      selectGrade(chart, counts, picked);
     };
+    chart.addEventListener('click', (e) => {
+      const bar = e.target.closest('.gc-bar');
+      if (bar) pick(picked === bar.dataset.k ? null : bar.dataset.k);
+    });
+    chart.addEventListener('keydown', (e) => {
+      const bar = e.target.closest('.gc-bar');
+      if (!bar) return;
+      const k = bar.dataset.k;
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        pick(picked === k ? null : k);
+      } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+        e.preventDefault();
+        const i = LETTERS.indexOf(k) + (e.key === 'ArrowRight' ? 1 : -1);
+        const next = LETTERS[Math.max(0, Math.min(LETTERS.length - 1, i))];
+        pick(next);
+        chart.querySelector(`.gc-bar[data-k="${next}"]`)?.focus();
+      }
+    });
     instSel.addEventListener('change', () => {
       fillSems();
       draw();
