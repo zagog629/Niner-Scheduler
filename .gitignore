@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+*.log
+.env
+# Course data comes from the "Update course data" GitHub Action (or `npm run scrape` locally)
+# and is never committed. Only data/grades/ is checked in.
+data/terms/
+data/terms.json
+data/catalog/
+data/rmp.json
