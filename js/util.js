@@ -98,7 +98,8 @@ export function toast(msg) {
   el.textContent = msg;
   el.classList.add('show');
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2600);
+  // Longer messages stay up longer so there's time to read them
+  toastTimer = setTimeout(() => el.classList.remove('show'), Math.max(2600, msg.length * 55));
 }
 
 export async function copyText(text) {

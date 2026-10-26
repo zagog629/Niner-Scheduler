@@ -79,6 +79,7 @@ const state = {
   sideBySide: store.get('ns:sideBySide', false) === true,
   shownThumbs: 0,
   lastShown: [],
+  pendingLoad: null, // a saved schedule being opened: { sig, secs, name, dropped, locked, why }
 };
 
 // Persistence
@@ -107,6 +108,7 @@ function restore() {
   state.view = { kind: 'results' };
   state.overlay = null;
   state.lastShown = [];
+  state.pendingLoad = null;
 }
 
 // Helpers
@@ -374,7 +376,16 @@ const regenerate = debounce(async () => {
     state.keep = out.keep;
     state.diag = out.diag;
     state.generating = false;
-    sortResults(before);
+    const load = state.pendingLoad;
+    const found = sortResults(load ? load.sig : before, !!load);
+    if (load && !found && !load.locked) {
+      // The saved schedule isn't among the results; lock its sections so it is, and keep showing it meanwhile
+      lockLoaded(load);
+      renderCourses();
+      renderBoard();
+      return;
+    }
+    if (load) finishLoad(load);
     renderCourses();
     renderBoard();
   } catch (err) {
@@ -384,14 +395,20 @@ const regenerate = debounce(async () => {
   }
 }, 120);
 
-function sortResults(keepSig) {
+/** Sorts the results and stays on the schedule with `keepSig` if it's still there. Returns whether it was */
+function sortResults(keepSig, force = false) {
   state.sorted = [...state.results].sort(comparator(state.plan.sort));
   state.index = 0;
-  if (keepSig && state.view.kind === 'results') {
+  let found = false;
+  if (keepSig && (force || state.view.kind === 'results')) {
     const i = state.sorted.findIndex((r) => sigOf(entriesForPick(r)) === keepSig);
-    if (i >= 0) state.index = i;
+    if (i >= 0) {
+      state.index = i;
+      found = true;
+    }
   }
   state.shownThumbs = 0;
+  return found;
 }
 
 function entriesForPick(r) {
@@ -1338,7 +1355,7 @@ function renderSaved() {
               <p class="small muted">${m ? `${m.credits} credits, ${m.days} days${m.start != null ? `, ${fmtTime(m.start)}–${fmtTime(m.end)}` : ''}` : ''}${missing ? `<span class="warn-text"> ${missing} section${missing === 1 ? ' is' : 's are'} no longer offered</span>` : ''}</p>
               <p class="small crns">${s.crns.map(esc).join(', ')}</p>
               <div class="saved-actions">
-                <button type="button" class="link-btn" data-sv="open">Open</button>
+                <button type="button" class="link-btn" data-sv="open" title="Load its courses into your plan and show it">Open</button>
                 <button type="button" class="link-btn" data-sv="overlay">Compare</button>
                 <button type="button" class="link-btn" data-sv="share">Share</button>
                 <button type="button" class="link-btn danger" data-sv="delete">Delete</button>
@@ -1351,6 +1368,76 @@ function renderSaved() {
     ${friend}`;
 }
 
+/**
+ * Opening a saved schedule loads it into your plan as if you'd built it by hand: its courses fill the
+ * course list (courses already there keep their color and settings) and the board lands on that exact
+ * schedule among all the results, so changing a setting afterwards works from it instead of losing it.
+ * Required courses it doesn't have are taken out; optional ones stay.
+ */
+async function loadSaved(s) {
+  const secs = s.crns.map((crn) => db.byCrn.get(crn)).filter(Boolean);
+  if (!secs.length) {
+    toast(`None of the sections in “${s.name}” are offered anymore.`);
+    return;
+  }
+  const crns = secs.map((sec) => sec.crn);
+  const keys = [...new Set(secs.map((sec) => `${sec.subj} ${sec.num}`))];
+  const dropped = state.plan.courses.filter((c) => !keys.includes(c.key) && !c.optional).map((c) => c.key);
+  state.plan.courses = state.plan.courses.filter((c) => keys.includes(c.key) || c.optional);
+  const fresh = [];
+  for (const key of keys) {
+    let c = courseOf(key);
+    if (!c) {
+      c = { key, optional: false, locked: [], excluded: [], color: nextColor() };
+      state.plan.courses.push(c);
+      fresh.push(key);
+    }
+    c.optional = false;
+    // Locks that pick a different section would rule this schedule out; ones that agree with it stay
+    c.locked = c.locked.filter((crn) => crns.includes(crn));
+    c.excluded = c.excluded.filter((crn) => !crns.includes(crn));
+  }
+  if (state.plan.courses.length <= 2) state.plan.courses.forEach((c) => state.expanded.add(c.key));
+  state.pendingLoad = { sig: [...crns].sort().join('.'), secs, name: s.name, dropped, locked: false, why: null };
+  // Show it right away; the board switches to the matching result once schedules are rebuilt
+  state.view = { kind: 'crns', crns, label: s.name };
+  state.tab = 'schedules';
+  state.mobile = 'board';
+  $('#share-banner').hidden = true;
+  persist();
+  renderLayout();
+  renderCourses();
+  renderBoard();
+  await Promise.all([...new Set(fresh.map((k) => k.split(' ')[0]))].map(loadGrades));
+  renderCourses();
+  regenerate();
+}
+
+function lockLoaded(load) {
+  const prefs = state.plan.prefs;
+  const free = { locked: [], excluded: [] };
+  load.why = load.secs.some((sec) => sectionReason(sec, free, prefs, null)) ? 'prefs' : 'other';
+  load.locked = true;
+  for (const sec of load.secs) {
+    const c = courseOf(`${sec.subj} ${sec.num}`);
+    if (!c || c.locked.includes(sec.crn)) continue;
+    c.locked = c.locked.filter((x) => db.byCrn.get(x)?.type !== sec.type);
+    c.locked.push(sec.crn);
+  }
+  persist();
+  regenerate();
+}
+
+function finishLoad(load) {
+  state.pendingLoad = null;
+  state.view = { kind: 'results' };
+  const removed = load.dropped.length ? `, replacing ${load.dropped.join(', ')}` : '';
+  let msg = `Loaded “${load.name}”${removed}`;
+  if (load.why === 'prefs') msg += '. It breaks one of your preferences, so its sections are locked in.';
+  else if (load.locked) msg += ' with its sections locked in.';
+  toast(msg);
+}
+
 function initSavedEvents() {
   const el = $('#saved-view');
   el.addEventListener('click', async (e) => {
@@ -1361,11 +1448,7 @@ function initSavedEvents() {
     if (!s) return;
     const act = b.dataset.sv;
     if (act === 'open') {
-      state.view = { kind: 'crns', crns: s.crns, label: s.name };
-      state.tab = 'schedules';
-      state.mobile = 'board';
-      renderLayout();
-      renderBoard();
+      loadSaved(s);
     } else if (act === 'overlay') {
       state.overlay = { id: s.id, name: s.name, crns: s.crns };
       state.tab = 'schedules';
