@@ -2,6 +2,7 @@ node_modules/
 .DS_Store
 *.log
 .env
+*:Zone.Identifier
 # Course data comes from the "Update course data" GitHub Action (or `npm run scrape` locally)
 # and is never committed. Only data/grades/ is checked in.
 data/terms/
