@@ -1674,10 +1674,12 @@ async function init() {
   try {
     await loadTerms();
   } catch (err) {
+    $('.term-picker').hidden = true;
     $('#layout').innerHTML = `<div class="fatal"><h2>Course data isn't published yet</h2><p>This site reads <code>data/terms.json</code>, which the “Update course data” GitHub Action creates. Run that workflow once (Actions tab → Update course data → Run workflow), or run <code>npm run scrape</code> locally.</p><p class="muted small">${esc(err.message)}</p></div>`;
     return;
   }
   if (!db.terms.length) {
+    $('.term-picker').hidden = true;
     $('#layout').innerHTML = '<div class="fatal"><h2>No terms available</h2><p>The data refresh hasn’t found any terms open for registration yet.</p></div>';
     return;
   }

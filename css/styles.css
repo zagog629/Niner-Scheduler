@@ -264,6 +264,7 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .prefs { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
 .pref-group { border-bottom: 1px solid var(--line-2); }
 .pref-group summary { display: flex; align-items: center; gap: 10px; padding: 11px 2px; cursor: pointer; font-weight: 600; list-style: none; }
+.pref-group summary > span:first-child { white-space: nowrap; }
 .pref-group summary::-webkit-details-marker { display: none; }
 .pref-group summary::after { content: ''; width: 7px; height: 7px; margin-left: auto; border-right: 2px solid var(--muted); border-bottom: 2px solid var(--muted); transform: rotate(-45deg); transition: transform 0.15s; flex: none; }
 .pref-group[open] summary::after { transform: rotate(45deg); }
@@ -475,7 +476,7 @@ input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--niner); 
 .saved-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
 .saved-item { display: grid; grid-template-columns: 132px minmax(0, 1fr); gap: 14px; padding: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; }
 .saved-thumb { border: 0; padding: 0; background: none; cursor: pointer; align-self: start; }
-.saved-name { width: 100%; max-width: 340px; font-weight: 650; font-size: 16px; border-color: transparent !important; padding: 0 6px; margin-left: -6px; background: transparent !important; }
+.saved-main .saved-name { width: 100%; max-width: 340px; font-weight: 650; font-size: 16px; border-color: transparent !important; padding: 0 6px; margin-left: -6px; background: transparent !important; }
 .saved-name:hover, .saved-name:focus { border-color: var(--line) !important; }
 .saved-main p { margin: 2px 0; }
 .crns { font-variant-numeric: tabular-nums; color: var(--ink-2); }
