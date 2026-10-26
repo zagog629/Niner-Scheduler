@@ -42,20 +42,26 @@ export function dayMask(letters) {
 /** Meetings in engine form: days bitmask + minutes + ISO dates. Untimed (online/TBA) meetings are dropped */
 export function meetingsOf(sec) {
   if (sec._m) return sec._m;
-  const out = [];
-  (sec.mt || []).forEach((m, ri) => {
-    if (!m.d || m.s == null || m.e == null) return;
-    out.push({
-      ri,
-      days: dayMask(m.d),
-      s: m.s,
-      e: m.e,
-      sd: m.sd || '0000-00-00',
-      ed: m.ed || '9999-12-31',
-      b: /no building needed/i.test(m.b || '') || m.bc === 'ONLINE' ? '' : m.b || m.bc || '',
-      once: !!(m.sd && m.sd === m.ed),
-    });
-  });
+  const timed = (sec.mt || []).map((m, ri) => ({ m, ri })).filter(({ m }) => m.d && m.s != null && m.e != null);
+  // Some sections list every class day as its own one-day meeting (ITIS 3246 alternates
+  // in-person and online weeks), so a one-day meeting is only a one-off (an orientation
+  // or final exam) when no other meeting shares its day and time and the section also
+  // meets regularly
+  const pattern = (m) => `${m.d}|${m.s}|${m.e}`;
+  const count = new Map();
+  for (const { m } of timed) count.set(pattern(m), (count.get(pattern(m)) || 0) + 1);
+  const isOneOff = (m) => !!(m.sd && m.sd === m.ed) && count.get(pattern(m)) === 1;
+  const meetsRegularly = timed.some(({ m }) => !isOneOff(m));
+  const out = timed.map(({ m, ri }) => ({
+    ri,
+    days: dayMask(m.d),
+    s: m.s,
+    e: m.e,
+    sd: m.sd || '0000-00-00',
+    ed: m.ed || '9999-12-31',
+    b: /no building needed/i.test(m.b || '') || m.bc === 'ONLINE' ? '' : m.b || m.bc || '',
+    once: meetsRegularly && isOneOff(m),
+  }));
   Object.defineProperty(sec, '_m', { value: out, enumerable: false });
   return out;
 }

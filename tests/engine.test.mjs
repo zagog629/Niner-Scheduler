@@ -11,6 +11,8 @@ import {
   lockedTypesOf,
 } from '../js/engine.js';
 import { normalizeSection, toFirstLast, parsePrereqHtml, parseDescriptionHtml, parseLinkedReply } from '../scripts/lib/normalize.mjs';
+import { meetingText, locationText } from '../js/modal.js';
+import { roomText } from '../js/util.js';
 
 let crn = 10000;
 function sec(subj, num, days, s, e, extra = {}) {
@@ -122,6 +124,44 @@ test('section filters: early, late, day off, breaks, full, locks', () => {
   assert.equal(sectionReason(sEve, c, noPrefs, lt), 'locked');
   const cf = course({ locked: [sFull.crn], excluded: [sFull.crn] });
   assert.equal(sectionReason(sFull, cf, { ...noPrefs, openOnly: true }, lockedTypesOf(cf, [sFull])), null, 'lock beats full and turned off');
+});
+
+test('a class listed one day at a time still counts as a weekly class', () => {
+  // Like ITIS 3246: every Friday is its own one-day meeting, alternating in person and online
+  const hybrid = sec('ITIS', '3246', 'F', 870, 1035);
+  hybrid.mt = ['2027-01-15', '2027-01-22', '2027-01-29', '2027-02-05'].map((d, i) => ({
+    d: 'F', s: 870, e: 1035, sd: d, ed: d, b: i % 2 ? 'Online (No Building Needed)' : 'Energy Prod & Infrastructr Ctr', bc: i % 2 ? 'ONLINE' : 'EPIC',
+  }));
+  assert.ok(meetingsOf(hybrid).every((m) => !m.once));
+  assert.equal(sectionReason(hybrid, course(), { ...noPrefs, daysOff: dayMask('F') }), 'dayoff');
+  assert.equal(sectionReason(hybrid, course(), { ...noPrefs, latest: 960 }), 'late');
+  const out = generate(toInput([{ key: 'ITIS 3246', sections: [hybrid] }]));
+  assert.equal(out.results[0].m.days, 1);
+  assert.equal(out.results[0].m.start, 870);
+
+  // A class that meets on a single date still shows up
+  const single = sec('MATH', '1120', 'S', 540, 720, { sd: '2027-02-06', ed: '2027-02-06' });
+  assert.equal(meetingsOf(single)[0].once, false);
+
+  // An extra day next to regular meetings (an orientation or final exam) stays a one-off
+  const weekly = sec('ITIS', '5010', 'MW', 600, 675);
+  weekly.mt.push({ d: 'W', s: 1050, e: 1125, sd: '2027-01-13', ed: '2027-01-13', b: 'Woodward Hall' });
+  assert.deepEqual(meetingsOf(weekly).map((m) => m.once), [false, true]);
+  assert.equal(sectionReason(weekly, course(), { ...noPrefs, latest: 1020 }), null);
+  assert.equal(meetingText(weekly), 'MW 10–11:15 AM');
+
+  // Like ITIS 5010 in Fall 2026: online Mondays first, then MW in person at the same time
+  const mixed = sec('ITIS', '5010', 'MW', 1050, 1125, { sd: '2026-08-26', ed: '2026-12-10', b: 'Colvard' });
+  for (const d of ['2026-08-17', '2026-08-24']) mixed.mt.push({ d: 'M', s: 1050, e: 1125, sd: d, ed: d, b: 'Online (No Building Needed)', bc: 'ONLINE' });
+  assert.equal(meetingText(mixed), 'MW 5:30–6:45 PM');
+  assert.equal(meetingText(hybrid), 'F 2:30–5:15 PM');
+  assert.equal(locationText(hybrid), 'Energy Prod & Infrastructr Ctr; Online');
+});
+
+test("Banner's \"None\" building isn't shown as a room", () => {
+  assert.equal(roomText({ b: 'None', bc: 'NONE', r: 'TBA' }), '');
+  assert.equal(roomText({ b: 'Online (No Building Needed)', bc: 'ONLINE', r: 'INTERNET' }), 'Online');
+  assert.equal(roomText({ b: 'Woodward Hall', bc: 'WOODW', r: '106' }), 'Woodward Hall 106');
 });
 
 test('a locked section stays in the schedule even when a break or day off covers it', () => {

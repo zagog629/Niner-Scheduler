@@ -86,26 +86,28 @@ export function renderGrid(el, opts) {
   const perDay = days.map(() => []);
   const addItems = (list, kind) => {
     for (const ent of list) {
-      // Banner splits some sections into several date ranges at the same time (hybrid weeks, breaks); draw one block
+      // Banner splits some sections into several date ranges or single days at the same time
+      // (hybrid weeks, breaks, "MW" plus a few extra "M" weeks); draw one block per day and time
       const groups = new Map();
       for (const m of meetingsOf(ent.sec)) {
         if (m.once) continue;
         const raw = ent.sec.mt[m.ri];
         const room = roomText(raw);
-        const key = `${m.days}|${m.s}|${m.e}`;
-        const g = groups.get(key);
-        if (!g) {
-          groups.set(key, { m, sd: raw.sd, ed: raw.ed, rooms: room ? [room] : [] });
-        } else {
-          if (raw.sd && (!g.sd || raw.sd < g.sd)) g.sd = raw.sd;
-          if (raw.ed && (!g.ed || raw.ed > g.ed)) g.ed = raw.ed;
-          if (room && !g.rooms.includes(room)) g.rooms.push(room);
-        }
-      }
-      for (const { m, sd, ed, rooms } of groups.values()) {
         days.forEach((d, di) => {
-          if (m.days & (1 << d)) perDay[di].push({ ...ent, kind, s: m.s, e: m.e, m, raw: { sd, ed, where: rooms.join(' / ') } });
+          if (!(m.days & (1 << d))) return;
+          const key = `${d}|${m.s}|${m.e}`;
+          const g = groups.get(key);
+          if (!g) {
+            groups.set(key, { di, m, sd: raw.sd, ed: raw.ed, rooms: room ? [room] : [] });
+          } else {
+            if (raw.sd && (!g.sd || raw.sd < g.sd)) g.sd = raw.sd;
+            if (raw.ed && (!g.ed || raw.ed > g.ed)) g.ed = raw.ed;
+            if (room && !g.rooms.includes(room)) g.rooms.push(room);
+          }
         });
+      }
+      for (const { di, m, sd, ed, rooms } of groups.values()) {
+        perDay[di].push({ ...ent, kind, s: m.s, e: m.e, m, raw: { sd, ed, where: rooms.join(' / ') } });
       }
     }
   };

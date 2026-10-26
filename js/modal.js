@@ -2,32 +2,40 @@
 import { db, loadCatalog, loadGrades, rmpFor, courseGrades } from './data.js';
 import { gpaOf, gradeTotals, courseTotals, findGrades } from './names.js';
 import { esc, fmtRange, fmtNum, ratingClass, gpaClass, icons, timeAgo, roomText } from './util.js';
-import { dayMask } from './engine.js';
+import { dayMask, meetingsOf } from './engine.js';
 
 const LETTERS = ['A', 'B', 'C', 'D', 'F', 'W'];
 
 const DAY_ABBR = ['M', 'Tu', 'W', 'Th', 'F', 'Sa', 'Su'];
+const maskText = (mask) => DAY_ABBR.filter((_, i) => mask & (1 << i)).join('');
 export function daysText(d) {
-  const m = dayMask(d);
-  return DAY_ABBR.filter((_, i) => m & (1 << i)).join('');
+  return maskText(dayMask(d));
+}
+
+// Raw meeting rows minus one-off days (an orientation or final exam), using the engine's rule
+function oneOffRows(sec) {
+  return new Set(meetingsOf(sec).filter((m) => m.once).map((m) => m.ri));
 }
 
 export function meetingText(sec) {
-  const timed = (sec.mt || []).filter((m) => m.d && m.s != null && m.sd !== m.ed);
+  const skip = oneOffRows(sec);
+  const timed = (sec.mt || []).filter((m, i) => m.d && m.s != null && m.e != null && !skip.has(i));
   if (!timed.length) return sec.method && /online/i.test(sec.method) ? 'Online, no set time' : 'Time to be announced';
-  const parts = [];
+  // One entry per time slot, so "MW" plus a few extra "M" weeks at the same time reads "MW 5:30–6:45 PM"
+  const slots = new Map();
   for (const m of timed) {
-    const text = `${daysText(m.d)} ${fmtRange(m.s, m.e)}`;
-    if (!parts.includes(text)) parts.push(text);
+    const k = `${m.s}|${m.e}`;
+    slots.set(k, { s: m.s, e: m.e, days: (slots.get(k)?.days || 0) | dayMask(m.d) });
   }
-  return parts.join('; ');
+  return [...slots.values()].map((x) => `${maskText(x.days)} ${fmtRange(x.s, x.e)}`).join('; ');
 }
 
 /** Building and room for each in-person meeting, or the campus / "Online" */
 export function locationText(sec) {
   const rooms = [];
-  for (const m of sec.mt || []) {
-    if (m.sd && m.sd === m.ed) continue; // one-off exam meetings
+  const skip = oneOffRows(sec);
+  for (const [i, m] of (sec.mt || []).entries()) {
+    if (skip.has(i)) continue;
     const where = roomText(m);
     if (where && !rooms.includes(where)) rooms.push(where);
   }

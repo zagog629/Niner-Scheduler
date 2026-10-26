@@ -156,8 +156,11 @@ function seatsText(sec) {
 }
 
 function whereText(sec) {
-  const m = sec.mt.find((x) => x.b);
-  return m ? roomText(m) : sec.campus || '';
+  for (const m of sec.mt) {
+    const room = roomText(m);
+    if (room) return room;
+  }
+  return sec.campus || '';
 }
 
 /** Sections + colors for whatever the board is showing right now */

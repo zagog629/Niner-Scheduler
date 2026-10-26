@@ -3,7 +3,7 @@ export const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
 
 /** "Woodward Hall 106", "Online" for Banner's online placeholder room, or '' when there's no room */
 export function roomText(m) {
-  if (!m || !m.b) return '';
+  if (!m || !m.b || m.bc === 'NONE' || /^none$/i.test(m.b.trim())) return '';
   if (/no building needed/i.test(m.b) || m.bc === 'ONLINE') return 'Online';
   return [m.b, m.r].filter(Boolean).join(' ');
 }
